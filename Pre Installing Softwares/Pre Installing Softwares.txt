@@ -1,0 +1,6 @@
+01) AutoHotkey_2.0.29_setup.exe
+02) tinytask.exe
+03) vs code
+04) AutoHotkey v2 Language Support VS Code Extension
+05) AHK++ (AutoHotkey Plus Plus)
+06) GitHub Desktop
