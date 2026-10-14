@@ -19,9 +19,9 @@
 #C::Run "Chrome" ; "Windows + C" ක්ලික් කර පසු, "Chrome Web Browser" එක Open වේ.
 #Y::Run "www.youtube.com"  ; "Windows + Y" ක්ලික් කර පසු, "Default Web Browser" එකෙන්, "Youtube" Open වේ.
 #d::Run "C:\Users\User\Documents\AutoHotkey" ; "Windows + D" Click කල පසු, ඇදලා Folder එක Open වේ.
-#a::Run "C:\Users\" A_UserName "\Documents\AutoHotkey" ;"A_Username" යන විචල්‍ය නිසා, Folder Path එක ලබා දීමේදී, "UserName" එක වෙනස් වුනත් එය ගැටළුවක් නොවේ.
-#q::Run "C:\Users\" A_UserName "\Downloads"
-#h::Run "C:\Users\" A_UserName "\Documents\AutoHotkey\MyFirstScript.ahk"
+#a::Run "C:\Users\" A_UserName "\Documents\AutoHotkey" ;"A_Username" යන විචල්‍ය නිසා, Folder Path එක ලබා දීමේදී, "UserName" එක වෙනස් වුනත් එය ගැටළුවක් නොවේ. මේක, AHK වල, "Inbuild Variable" එකක්. මේකේ "A_" කියන කොටස, නැහැ යැයි උපකල්පනය කරන්න.
+#q::Run "C:\Users\" A_UserName "\Downloads" ;;මේක, AHK වල, "Inbuild Variable" එකක්. මේකේ "A_" කියන කොටස, නැහැ යැයි උපකල්පනය කරන්න.
+#h::Run "C:\Users\" A_UserName "\Documents\AutoHotkey\MyFirstScript.ahk" ;මේක, AHK වල, "Inbuild Variable" එකක්. මේකේ "A_" කියන කොටස, නැහැ යැයි උපකල්පනය කරන්න.
 #e::Edit ; "Windows + E" ක්ලික් කිරීමෙන්, අදාළ, AHK File එක, Edit කර ගත හැකිය.
 
 
@@ -70,7 +70,7 @@ w::{
     ClipWait 1
     
 
-    msgbox A_Clipboard
+    msgbox A_Clipboard  ;මේක, AHK වල, "Inbuild Variable" එකක්. මේකේ "A_" කියන කොටස, නැහැ යැයි උපකල්පනය කරන්න.
 
     WinActivate("ahk_exe Notepad.exe")
     Sleep 200
