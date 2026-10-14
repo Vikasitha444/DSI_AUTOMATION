@@ -10,7 +10,7 @@
 
 
 
-!x::msgbox "hello" ; මේ Code එකෙන්, "ALT + X" ක්ලික් කල විට, "Hello" යන වචනය Type වේ.
+!x::msgbox "hello" ; මේ Code එකෙන්, "ALT + X" ක්ලික් කල විට, "Hello" යන වචනය, MassageBox එකක දර්ශනය වේ.
 
 ::btv:: By the way ; මේ Code එකෙන්, "btv" ලෙස Type කර, "Enter" බොත්තම Click කල විට, "By the way" යන වචනය Type වේ.
 :*:PEmail:: pawanvikasitha2001@gmail.com ; මේ Code එකෙන්, "PEmail" ලෙස Type කල සැනින්, "Email එක" Type වේ. (මෙහිදී, "Enter" බොත්තම "Press කිරීම" අනිවාර්ය නොවේ)
@@ -65,7 +65,7 @@ w::{
     Sleep 200
 
     
-    A_Clipboard := ""
+    A_Clipboard := ""    ;මේක, AHK වල, "Inbuild Variable" එකක්. මේකේ "A_" කියන කොටස, නැහැ යැයි උපකල්පනය කරන්න.
     Send "^c"
     ClipWait 1
     
