@@ -4,3 +4,4 @@
 04) AutoHotkey v2 Language Support VS Code Extension
 05) AHK++ (AutoHotkey Plus Plus)
 06) GitHub Desktop
+07) Git-2.56.0.2-64-bit
