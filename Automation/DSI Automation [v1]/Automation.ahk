@@ -16,6 +16,18 @@ msgbox "This Automation Process Is Still In The Test Mode. Do this with your own
 ::Sajith::dss008155
 
 
+windows := WinGetList("ahk_exe javaw.exe ahk_class SunAwtFrame")
+
+for hwnd in windows {
+    title := WinGetTitle("ahk_id " hwnd)
+
+    if InStr(title, "Warehouse Management System") {
+        WinActivate("ahk_id " hwnd)
+        Sleep(1000) ; Keep each window focused for 1 second
+    }
+}
+
+
 /* මේ Code එකෙන් කරන්නේ, "Picker" කියන Window එක "Active (Focus වෙලාද)" කියා බලන එක */
 /* (Window එකක, නම හොයාගන්න, "Window Spy" කියන Tool එක භාවිතා කරන්න පුළුවන්. මේක, "AHK Dashboard" එකේ තියෙනවා) */
 #HotIf WinActive("ahk_pid 14300") 
