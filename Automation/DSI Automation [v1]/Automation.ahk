@@ -17,10 +17,8 @@ msgbox "This Automation Process Is Still In The Test Mode. Do this with your own
 
 
 #Requires AutoHotkey v2.0
-
 CoordMode("Pixel", "Client")
 
-; Initialize PID variables
 checker_window_pid := 0
 packer_window_pid  := 0
 picker_window_pid  := 0
@@ -33,19 +31,23 @@ for hwnd in windows {
     if !InStr(title, "Warehouse Management System")
         continue
 
+    ; Check the window state BEFORE maximizing
+    state := WinGetMinMax("ahk_id " hwnd)
+
     WinActivate("ahk_id " hwnd)
     Sleep(500)
 
-    Send("#{Up}")
-    Sleep(1000)
+    ; Maximize only if it is not already maximized
+    if (state != 1) {
+        Send("#{Up}")
+        Sleep(1000)
+    }
 
     color := PixelGetColor(650, 34, "RGB")
     colorHex := Format("{:06X}", color)
 
-    ; Get the process ID of this window
     pid := WinGetPID("ahk_id " hwnd)
 
-    ; Assign PID according to window color
     switch colorHex {
         case "4472C4":
             checker_window_pid := pid
@@ -58,10 +60,7 @@ for hwnd in windows {
     }
 }
 
-; Display the assigned PIDs
-MsgBox(
-    "ahk_pid " . picker_window_pid
-)
+MsgBox("ahk_pid " picker_window_pid)
 
 WinActivate("ahk_pid " . picker_window_pid) 
 
