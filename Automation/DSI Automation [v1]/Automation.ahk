@@ -60,7 +60,7 @@ for hwnd in windows {
     }
 }
 
-MsgBox("ahk_pid " picker_window_pid)
+
 
 WinActivate("ahk_pid " . picker_window_pid) 
 
@@ -78,7 +78,7 @@ F5::{
 
     WinActivate("ahk_pid " . checker_window_pid) ;/* මේ Code එකෙන් කරන්නේ, "Checker" කියන Window එක "Active (Focus)" කිරීම */
     RunWait "Paste the barcode in Checker Window.exe" ; මේ Code එකෙන්, "Picker.exe" එක ධාවනය වී අවසන් වනතුරු රැඳී සිටි. 
-
+   
 }
 
 
