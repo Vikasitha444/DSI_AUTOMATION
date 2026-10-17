@@ -10,10 +10,23 @@ msgbox "This Automation Process Is Still In The Test Mode. Do this with your own
             /* # : WinKey */
 
 
-::deshan::dss008499 ; මේ Code එකෙන්, "deshan" ලෙස Type කර, "Enter" බොත්තම Click කල විට, EPF කේතය Type වේ.        
+ ; මේ Code එකෙන්, "deshan" ලෙස Type කර, "Enter" බොත්තම Click කල විට, EPF කේතය Type වේ.        
 ::nilantha::dss000736
-::Sarath::dss004825
+::Ramesh::dss004674
+::Pasindu::dss008290
+::deshan::dss008499
 ::Sajith::dss008155
+::Ranasingha::dss000698
+::Lasantha::dss003512
+::Dauglas::dss003637
+::Kuruppu::dss003837
+::Mahendra::dss004826
+::Thilak::dss005126
+::Sampath::dss007956
+::Sarath::dss004825
+::Bandusena::dss006485
+
+
 
 
 #Requires AutoHotkey v2.0
