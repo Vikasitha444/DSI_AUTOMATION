@@ -39,7 +39,7 @@ picker_window_pid  := 0
 windows := WinGetList("ahk_exe javaw.exe ahk_class SunAwtFrame")
 
 ;Displaying the Warning Message
-overlay0 := Show_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen()
+global overlay0 := Show_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen()
 
 for hwnd in windows {
     title := WinGetTitle("ahk_id " hwnd)
@@ -82,16 +82,20 @@ Sleep 100
 
 
 WinActivate("ahk_pid " . picker_window_pid) 
-overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Press F5
+global overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Press F5
 
 
 
 /* මේ Code එකෙන් කරන්නේ, "Picker" කියන Window එක "Active (Focus වෙලාද)" කියා බලන එක */
 /* (Window එකක, නම හොයාගන්න, "Window Spy" කියන Tool එක භාවිතා කරන්න පුළුවන්. මේක, "AHK Dashboard" එකේ තියෙනවා) */
 #HotIf WinActive("ahk_pid " . picker_window_pid) 
+hide_Press_F6_to_PICKING_Message(overlay3)
+Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0)
+
 F5::{
                 
     hide_Press_F5_to_PICKING_Message(overlay1) ;Hide overlay GUI For Press F5
+    
 
     RunWait "Picker.exe"   ; මේ Code එකෙන්, "Picker.exe" එක ධාවනය වී අවසන් වනතුරු රැඳී සිටි. "Picker.exe" එක මඟින් සිදු වන්නේ, "Picker" Window එක තුල සිදු වෙන Clicks සිදු කිරීමයි. මෙය, "TinyTask" නම්, Software එක භාවිතා කර කලින් නිර්මාණය කර තිබු File එකක්.
     
@@ -111,6 +115,10 @@ F5::{
 
 /* මේ Code එකෙන් කරන්නේ, "Checker" කියන Window එක "Active (Focus වෙලාද)" කියා බලන එක */
 #HotIf WinActive("ahk_pid " . checker_window_pid) 
+
+Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0)
+hide_Press_F5_to_PICKING_Message(overlay1)
+
 F6::{ 
     hide_Press_F6_to_PICKING_Message(overlay3) 
     
@@ -183,27 +191,30 @@ hide_Press_F5_to_PICKING_Message(myGui) {
 Show_Press_F6_to_PICKING_Message() {
     myGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
     myGui.BackColor := "202020"
-    myGui.SetFont("s16 Bold cFFFFFF", "Segoe UI")
-    myGui.AddText("Center w350", "Press 'F6' to 'Checking' and 'Packing'")
+    myGui.SetFont("s9 Bold cFFFFFF", "Segoe UI")
 
-    myGui.Show("AutoSize Hide")
-    myGui.GetPos(,, &guiWidth, &guiHeight)
+    myGui.AddText("Center w140 h24 +0x200", "Press F6 to Pick")
 
     ; Get primary monitor work area
     MonitorGetWorkArea(1, &left, &top, &right, &bottom)
 
-    ; Align to bottom-right with a 20-pixel margin
-    margin := 20
+    ; Bottom-right corner positioning
+    margin := 10
+    guiWidth := 140
+    guiHeight := 24
+
     xPos := right - guiWidth - margin
     yPos := bottom - guiHeight - margin
 
-    myGui.Show("x" xPos " y" yPos " NoActivate")
+    myGui.Show("x" xPos " y" yPos " w" guiWidth " h" guiHeight " NoActivate")
+
     return myGui
 }
 
 hide_Press_F6_to_PICKING_Message(myGui) {
     myGui.Hide()
 }
+
 
 
 /* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
