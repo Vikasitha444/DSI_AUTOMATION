@@ -10,7 +10,7 @@ msgbox "This Automation Process Is Still In The Test Mode. Do this with your own
             /* # : WinKey */
 
 
- ; මේ Code එකෙන්, "deshan" ලෙස Type කර, "Enter" බොත්තම Click කල විට, EPF කේතය Type වේ.        
+ ; මේ Code එකෙන්, "deshan" ලෙස Type කර, "Enter" බොත්තම Click කල විට, EPF කේතය Type වේ. (Hot Strings ලෙසද හැඳින්වේ)        
 ::nilantha::dss000736
 ::Ramesh::dss004674
 ::Pasindu::dss008290
@@ -29,60 +29,103 @@ msgbox "This Automation Process Is Still In The Test Mode. Do this with your own
 
 
 
-#Requires AutoHotkey v2.0
-CoordMode("Pixel", "Client")
 
+CoordMode("Pixel", "Client")
+;  මෙතැනදී, "CoordMode" Function එකෙන් කරන්නේ, "Client ගේ Software එකේ Window එකට"සාපෙක්ෂව, Screen එකේ, ඛණ්ඩාංක ලබා ගැනීමයි.
+; "CoordMode" Function එකට, "Parameters" 02ක් "Parse" කල යුතු වේ. 
+;            (i) ඛණ්ඩාංක මැනීමට භාවිතා කල යුතු මිම්ම {උදා:- Pixel }
+;            (ii) ඛණ්ඩාංක ලබා ගත යුත්තේ, "Screen එකට", "Window එකට" හෝ "Client ගේ Software එකේ Window එකට"සාපෙක්ෂවද යන්නයි. (මෙහි, හොඳම ක්‍රමය වන්නේ, "Client ගේ Software එකේ Window එකට"සාපෙක්ෂව ඛණ්ඩාංක ලබා ගැනීමයි)
+; "CoordMode" යන්නෙහි දිගු නාමය වන්නේ, "coordinates mode" යන්නයි.
+
+
+
+;මේ Code එකෙන්, "checker_window_pid","packer_window_pid","picker_window_pid" යන Variable වලට, බින්දුව (0), Assign කරනු ලැබේ. මෙහි අරමුණ වන්නේ, එම, "Variables" වල අගයන්, "Reset" කිරීමයි.
 checker_window_pid := 0
 packer_window_pid  := 0
 picker_window_pid  := 0
 
+
+
+;මේ Code එකෙන්, "DSI Warehouse Mangement System" එකට, අයත් "Windows" මොනවද යන්න සොයා, ඉන්පසු එය, List එකකට Save කරයි.
+;මෙහි අරමුණ වන්නේ, Computer එකේ, Windows කිහිපයක් Open කර ඇති විට, "DSI Warehouse Mangement System" එකට, අයත් "Windows" වෙනම හඳුනා ගැනීමයි.
+;"DSI Warehouse Mangement System" එක අයිති, "ahk_exe javaw.exe ahk_class SunAwtFrame" කියන, "Window" වර්ගයටයි.
+;මෙහිදී, "DSI Warehouse Mangement System" එකට, අයත්, "ahk_exe javaw.exe ahk_class SunAwtFrame" යන, වර්ගයේ, "Windows" කිහිපයක් පැවතිය හැකි නිසා, ඒ සියල්ල හඳුනාගෙන "windows කියන Varibale එකේ Save කරයි"
 windows := WinGetList("ahk_exe javaw.exe ahk_class SunAwtFrame")
 
-;Displaying the Warning Message
-global overlay0 := Show_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen()
+
+
+global overlay0 := Show_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen()  ; Displaying the Warning Message (මේක තාවකාලිකව, GUI එකක් නිර්මාණය කිරීම සඳහා යෙදු Code එකක්. මේක ගැන හිතන්න එපා. )
+
+
+
+;පහතින් ඇති, ForLoop එක යෙදීමේ අරමුණ වන්නේ, "DSI Warehouse Mangement System" එකේ, "Picking", "Checking" , "Packing" යන, "Windows" අනන්‍යව හඳුනා ගැනීමට, "Computer" එකේ පවතින සියලුම, "Windows" For Loop එක මඟින් Loop කිරීමයයි.
+;එම "Window" වල, පවතින, එකම, අනන්‍යතාව පෙන්වන ලක්ෂනය වනුයේ, ඒවායේ පාට යි. ("Picking Window එක" := කොළ පාටයි, "Checking Window එක" := නිල් පාටයි, "Packing Window එක" := තැඹිලි පාටයි) 
+;තවද, මෙම ForLoop එක ක්‍රියාත්මක වෙන විට, වරකට එක බහින්, සෑම "Window" එකකම, පාට, පරික්ෂා කරනු ලබයි.
+;තවද, වරකට එක බහින්, සෑම "Window" එකක්ම, "Maximize" වී ඇත්දැයි පරික්ෂා කරනු ලබයි.
+;පාට ගැලපුනොත්, "Window" එකෙහි, "AHK ID" එක, "checker_window_pid", "packer_window_pid" සහ "picker_window_pid", යන Variables වල‍ට Save වේ.
 
 for hwnd in windows {
-    title := WinGetTitle("ahk_id " hwnd)
+    title := WinGetTitle("ahk_id " hwnd)  ; hwnd (Handle to a Window) == මේක, "Microsoft Windwos" විසින්, Window එකක්, අනන්‍යව හඳුනාගැනීමට, ලබා දෙන අංකයක්.
+                                          ; මේ Code එකෙන්, "ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, Window එකේ, "AHK ID" එක සහ, hwnd අංකය (මේක, "Microsoft Windwos" විසින්, Window එකක්, අනන්‍යව හඳුනාගැනීමට, ලබා දෙන අංකය) භාවිතා කර, එම "Window" එකේ, "Title එක", "Variable" එකට Assign කරනු ලබයි.
 
-    if !InStr(title, "Warehouse Management System")
-        continue
+                                          
+    if !InStr(title, "Warehouse Management System") ; මේ Code එකෙන් Check කරන්නේ, "Warehouse Management System" කියන, "Window" එක Open වෙලා තියෙනවද යන්න පරික්ෂා කිරීමයි.
+        continue                                    ; එසේ Open වී නැත්නම්, කිසිවක් සිදු නොවේ.
 
-    ; Check the window state BEFORE maximizing
-    state := WinGetMinMax("ahk_id " hwnd)
+    
+    state := WinGetMinMax("ahk_id " hwnd)   ;මේ Code එකෙන් කරන්නේ, "Warehouse Management System එකේ", "ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, Window එක, "Minimized" වෙලාද? "Maximize" වෙලාද යන්න බැලීමයි. ඉන්පසු, "state"  යන Varibale එකට, Assign කරයි.
+                                            ; මේ Code එක භාවිතා කිරීමේ අරමුණ තමා, "Window" එක තුල, ඛණ්ඩාංක ආශ්‍රිත වැඩ කටයුතු සිදු කරන විට, නිරවද්‍යව වැඩි කිරීමට සහ, ඕනෑම, Computer එකක, ක්‍රියාත්මක වන විදිහට නිර්මාණය කිරීම.
 
-    WinActivate("ahk_id " hwnd)
-    Sleep(500)
 
-    ; Maximize only if it is not already maximized
+    WinActivate("ahk_id " hwnd) ;මේ Code එකෙන් කරන්නේ, "Warehouse Management System එකේ", "ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, Window එක, ඉදිරියට ගෙන ඒමයි (Activate කිරීමයි).
+    
+    Sleep(500)                  ;මේ Code එකෙන් කරන්නේ, ඊළඟ පියවරට යාමට පෙර, "500ms" ක, Delay එකක් තැබීමයි.
+
+    
+    ;මේ "If Code Block එකෙන්" බලන්නේ, Window "Maximize" වෙලාද යන්නයි.
+    ;එසේ, Window එක "Maximize" වෙලා නැත්නම්, එම "Window" එක, "Win + UpArrowKey" එක, Shortcut එක ලෙස භාවිතා කර, "Maximize" කරනු ලැබේ.
     if (state != 1) {
         Send("#{Up}")
-        Sleep(1000)
+        Sleep(1000)             ;මේ Code එකෙන් කරන්නේ, ඊළඟ පියවරට යාමට පෙර, "1000ms" ක, Delay එකක් තැබීමයි.
     }
 
-    color := PixelGetColor(650, 34, "RGB")
-    colorHex := Format("{:06X}", color)
+    color := PixelGetColor(650, 34, "RGB") ;මේ Code එකේ අරමුණ වන්නේ, ලබා දී ඇති, "X=650", "Y=34" ඛණ්ඩාංකයේ පාට, "RGB" ආකාරයෙන් ලබා ගැනීමයි.
+    
+    colorHex := Format("{:06X}", color)    ; මේ Code එකෙන් කරන්නේ, "RGB" ලෙස ගත්තු පාට, "Hexadecimal" ආකාරයට Convert කර, "colorHex" නම්, Variable එකට Save කිරීමයි.
 
-    pid := WinGetPID("ahk_id " hwnd)
+    pid := WinGetPID("ahk_id " hwnd)  ; මේ Code එකෙන් කරන්නේ, "ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, Window එකේ, "Process ID" එක ලබා ගැනීමයි.
+                                      ; මේක ලබා ගැනීමට හේතුව, පහලින් ඇති, "SWICH-CASE Code Block" එක පිලිබඳ අධ්‍යනය කරන විට තේරෙයි.
+
+
+    
+    
+; පහතින් ඇති, "SWICH-CASE Code Block" එකෙන් පරික්ෂා කරන්නේ, ඉහතදී, "colorHex" නම්, Variable එකට, "Assign" වී ඇති, පාටට අනුව, ගැලපෙන, "Warehouse Management System Software එකේ" Window එකට, අදාළ, Process ID එක, Assign කිරීමයි
+
 
     switch colorHex {
-        case "4472C4":
-            checker_window_pid := pid
+        case "4472C4":                     ;"colorHex" නම්, Varibale එකේ අගය, "නිල්" පාට නම්....
+            checker_window_pid := pid           ;..."ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, "Process ID" එක, "checker_window_pid" යන, Varibale එකට Assign වේ.
 
-        case "ED7D31":
-            packer_window_pid := pid
 
-        case "00B050":
-            picker_window_pid := pid
+        case "ED7D31":                      ;"colorHex" නම්, Varibale එකේ අගය, "තැඹිලි" පාට නම්....    
+            packer_window_pid := pid            ;..."ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, "Process ID" එක, "packer_window_pid" යන, Varibale එකට Assign වේ.    
+
+
+        case "00B050":                      ;"colorHex" නම්, Varibale එකේ අගය, "කොළ" පාට නම්....
+            picker_window_pid := pid            ;..."ForLoop එක" විසින්, මේ අවස්ථාවේ තෝරා ගෙන ඇති, "Process ID" එක, "picker_window_pid" යන, Varibale එකට Assign වේ.
     }
 }
 
-Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0)
+
+Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0) 
 Sleep 100
 
 
 
 WinActivate("ahk_pid " . picker_window_pid) 
 global overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Press F5
+
+
 
 
 
@@ -113,6 +156,8 @@ F5::{
 
 
 
+
+
 /* මේ Code එකෙන් කරන්නේ, "Checker" කියන Window එක "Active (Focus වෙලාද)" කියා බලන එක */
 #HotIf WinActive("ahk_pid " . checker_window_pid) 
 
@@ -128,6 +173,28 @@ F6::{
      WinActivate("ahk_pid " . picker_window_pid)  ; /* මේ Code එකෙන් කරන්නේ, "Picker" කියන Window එක, නැවත "Active (Focus)" කිරීම */
 }
 
+
+
+
+
+
+/* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
+#SingleInstance Force 
+#UseHook
+F12:: ExitApp
+
+
+
+
+
+
+
+
+
+
+; ===================================================================
+; GUIs Place in a diffrent folder
+; ================================================================
 
 
 ;GUI
@@ -216,8 +283,3 @@ hide_Press_F6_to_PICKING_Message(myGui) {
 }
 
 
-
-/* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
-#SingleInstance Force 
-#UseHook
-F12:: ExitApp
