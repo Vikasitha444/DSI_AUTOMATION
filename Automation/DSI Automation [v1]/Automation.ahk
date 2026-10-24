@@ -123,7 +123,8 @@ Sleep 100
 
 
 WinActivate("ahk_pid " . picker_window_pid) 
-global overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Press F5
+;global overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Press F5
+
 
 
 
@@ -134,11 +135,11 @@ global overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Pres
 #HotIf WinActive("ahk_pid " . picker_window_pid) 
 
 Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0)
-Show_Press_F5_to_PICKING_Message()
+;Show_Press_F5_to_PICKING_Message()
 
 F5::{
                 
-    hide_Press_F5_to_PICKING_Message(overlay0) ;Hide overlay GUI For Press F5
+    ;hide_Press_F5_to_PICKING_Message(overlay0) ;Hide overlay GUI For Press F5
     
 
     RunWait "Picker.exe"   ; මේ Code එකෙන්, "Picker.exe" එක ධාවනය වී අවසන් වනතුරු රැඳී සිටි. "Picker.exe" එක මඟින් සිදු වන්නේ, "Picker" Window එක තුල සිදු වෙන Clicks සිදු කිරීමයි. මෙය, "TinyTask" නම්, Software එක භාවිතා කර කලින් නිර්මාණය කර තිබු File එකක්.
@@ -152,7 +153,7 @@ F5::{
 
     WinActivate("ahk_pid " . checker_window_pid) ;/* මේ Code එකෙන් කරන්නේ, "Checker" කියන Window එක "Active (Focus)" කිරීම */
     RunWait "Paste the barcode in Checker Window.exe" ; මේ Code එකෙන්, "Picker.exe" එක ධාවනය වී අවසන් වනතුරු රැඳී සිටි. 
-    global overlay3 := Show_Press_F6_to_PICKING_Message()  
+    ;global overlay3 := Show_Press_F6_to_PICKING_Message()  
 }
 
 
@@ -163,10 +164,10 @@ F5::{
 #HotIf WinActive("ahk_pid " . checker_window_pid) 
 
 Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0)
-hide_Press_F5_to_PICKING_Message(overlay1)
+;hide_Press_F5_to_PICKING_Message(overlay1)
 
 F6::{ 
-    hide_Press_F6_to_PICKING_Message(overlay3) 
+    ;hide_Press_F6_to_PICKING_Message(overlay3) 
     
      RunWait "Checker Window.exe" ; මේ Code එකෙන්, "checker.exe" එක ධාවනය වී අවසන් වනතුරු රැඳී සිටි. 
      WinActivate("ahk_pid " . packer_window_pid) ; /* මේ Code එකෙන් කරන්නේ, "Packer" කියන Window එක "Active (Focus)" කිරීම */
@@ -220,62 +221,134 @@ Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(myGui) {
 
 
 ;GUI 2
-Show_Press_F5_to_PICKING_Message() {
-    myGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
-    myGui.BackColor := "202020"
-    myGui.SetFont("s16 Bold cFFFFFF", "Segoe UI")
-    myGui.AddText("Center w350", "Press 'F5' to 'Picking'")
+; ── Minimal Black & White Overlay ──
 
-    myGui.Show("AutoSize Hide")
-    myGui.GetPos(,, &guiWidth, &guiHeight)
+myGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
+myGui.BackColor := "000000"
+myGui.MarginX := 18
+myGui.MarginY := 20
 
-    ; Get primary monitor work area
-    MonitorGetWorkArea(1, &left, &top, &right, &bottom)
+; Header
+myGui.SetFont("s11 Bold cFFFFFF", "Segoe UI")
+myGui.AddText("x18 y20 w224 h30 Center", "Help")
 
-    ; Align to the right with a responsive margin
-    margin := 20
-    xPos := right - guiWidth - margin
-    yPos := top + ((bottom - top - guiHeight) // 2)
+; Divider
+myGui.AddProgress("x18 y60 w224 h1 c606060 Background606060", 100)
 
-    myGui.Show("x" xPos " y" yPos " NoActivate")
-    return myGui
+; Description
+myGui.SetFont("s13 cDCDCDC", "Segoe UI")
+myGui.AddText("x18 y78 w224 h50 Center", "Enter Picklist number and press 'F5'")
+
+; Extra vertical space at the bottom
+myGui.AddText("x18 y140 w224 h100", "")
+
+guiVisible := false
+
+SetTimer(CheckPickerWindow, 200)
+
+CheckPickerWindow() {
+    global picker_window_pid, myGui, guiVisible
+
+    activeHwnd := WinExist("A")
+    pickerHwnd := WinExist("ahk_pid " picker_window_pid)
+    pickerActive := false
+
+    if (activeHwnd && pickerHwnd) {
+        try {
+            pickerActive := (
+                WinGetPID("ahk_id " activeHwnd) = picker_window_pid
+            )
+        }
+    }
+
+    if (pickerActive && !guiVisible) {
+        myGui.Show("NA AutoSize")
+        myGui.GetPos(, , &guiW, &guiH)
+
+        x := A_ScreenWidth - guiW - 20
+        y := (A_ScreenHeight - guiH) // 2
+
+        myGui.Show("NA x" x " y" y)
+        guiVisible := true
+    } else if (!pickerActive && guiVisible) {
+        myGui.Hide()
+        guiVisible := false
+    }
 }
-
-hide_Press_F5_to_PICKING_Message(myGui) {
-    myGui.Hide()
-}
-
-
 
 
 ;GUI 3
-Show_Press_F6_to_PICKING_Message() {
-    myGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
-    myGui.BackColor := "202020"
-    myGui.SetFont("s9 Bold cFFFFFF", "Segoe UI")
 
-    myGui.AddText("Center w140 h24 +0x200", "Press F6 to Pick")
 
-    ; Get primary monitor work area
-    MonitorGetWorkArea(1, &left, &top, &right, &bottom)
+; ── Help Overlay ──
 
-    ; Bottom-right corner positioning
-    margin := 10
-    guiWidth := 140
-    guiHeight := 24
+checker_window_title := checker_window_pid
+helpGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
+helpGui.BackColor := "000000"
+helpGui.MarginX := 18
+helpGui.MarginY := 20
 
-    xPos := right - guiWidth - margin
-    yPos := bottom - guiHeight - margin
+; Header
+helpGui.SetFont("s11 Bold cFFFFFF", "Segoe UI")
+helpGui.AddText("x18 y20 w224 h30 Center", "Help")
 
-    myGui.Show("x" xPos " y" yPos " w" guiWidth " h" guiHeight " NoActivate")
+; Divider
+helpGui.AddProgress(
+    "x18 y60 w224 h1 c606060 Background606060",
+    100
+)
 
-    return myGui
+; Instructions
+helpGui.SetFont("s13 cDCDCDC", "Segoe UI")
+helpGui.AddText(
+    "x18 y78 w224 h50 Center",
+    "Enter Picklist number and press 'F5'"
+)
+
+; Extra height
+helpGui.AddText("x18 y140 w224 h100", "")
+
+helpGuiVisible := false
+
+SetTimer(UpdateHelpOverlay, 200)
+
+UpdateHelpOverlay() {
+    global picker_window_pid, checker_window_title
+    global helpGui, helpGuiVisible
+
+    activeHwnd := WinExist("A")
+    checkerHwnd := WinExist(checker_window_title)
+
+    shouldShow := false
+
+    if activeHwnd {
+        try {
+            activePid := WinGetPID("ahk_id " activeHwnd)
+
+            if (activePid = picker_window_pid)
+                shouldShow := true
+        }
+
+        if (checkerHwnd && activeHwnd = checkerHwnd)
+            shouldShow := true
+    }
+
+    if (shouldShow && !helpGuiVisible) {
+        helpGui.Show("NA AutoSize")
+
+        helpGui.GetPos(, , &guiW, &guiH)
+
+        x := A_ScreenWidth - guiW - 20
+        y := (A_ScreenHeight - guiH) // 2
+
+        helpGui.Show("NA x" x " y" y)
+        helpGuiVisible := true
+    }
+    else if (!shouldShow && helpGuiVisible) {
+        helpGui.Hide()
+        helpGuiVisible := false
+    }
 }
-
-hide_Press_F6_to_PICKING_Message(myGui) {
-    myGui.Hide()
-}
-
 
 
 
