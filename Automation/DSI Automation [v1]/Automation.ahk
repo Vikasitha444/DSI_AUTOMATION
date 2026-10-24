@@ -132,12 +132,13 @@ global overlay1 := Show_Press_F5_to_PICKING_Message() ;Show overlay GUI For Pres
 /* මේ Code එකෙන් කරන්නේ, "Picker" කියන Window එක "Active (Focus වෙලාද)" කියා බලන එක */
 /* (Window එකක, නම හොයාගන්න, "Window Spy" කියන Tool එක භාවිතා කරන්න පුළුවන්. මේක, "AHK Dashboard" එකේ තියෙනවා) */
 #HotIf WinActive("ahk_pid " . picker_window_pid) 
-hide_Press_F6_to_PICKING_Message(overlay3)
+
 Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(overlay0)
+Show_Press_F5_to_PICKING_Message()
 
 F5::{
                 
-    hide_Press_F5_to_PICKING_Message(overlay1) ;Hide overlay GUI For Press F5
+    hide_Press_F5_to_PICKING_Message(overlay0) ;Hide overlay GUI For Press F5
     
 
     RunWait "Picker.exe"   ; මේ Code එකෙන්, "Picker.exe" එක ධාවනය වී අවසන් වනතුරු රැඳී සිටි. "Picker.exe" එක මඟින් සිදු වන්නේ, "Picker" Window එක තුල සිදු වෙන Clicks සිදු කිරීමයි. මෙය, "TinyTask" නම්, Software එක භාවිතා කර කලින් නිර්මාණය කර තිබු File එකක්.
@@ -175,13 +176,6 @@ F6::{
 
 
 
-
-
-
-/* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
-#SingleInstance Force 
-#UseHook
-F12:: ExitApp
 
 
 
@@ -281,5 +275,15 @@ Show_Press_F6_to_PICKING_Message() {
 hide_Press_F6_to_PICKING_Message(myGui) {
     myGui.Hide()
 }
+
+
+
+
+
+
+/* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
+#SingleInstance Force 
+#UseHook
+F12:: ExitApp
 
 
