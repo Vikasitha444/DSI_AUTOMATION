@@ -220,7 +220,7 @@ Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(myGui) {
 
 
 
-; "Enter Picklist number and press 'F5'" Warning Message Overlay GUI
+; "Enter Picklist number and press 'F5'"  Message Overlay GUI
 
 checker_window_title := checker_window_pid
 helpGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
@@ -293,7 +293,7 @@ UpdateHelpOverlay() {
 
 
 
-; "Scan the Barcodes and Press 'F6' to Submit and Check" Warning Message Overlay GUI
+; "Scan the Barcodes and Press 'F6' to Submit and Check" Message Overlay GUI
 
 checkerOverlay := Gui("+AlwaysOnTop -Caption +ToolWindow +Border +E0x20")  ; E0x20 = click-through
 checkerOverlay.BackColor := "000000"
@@ -339,6 +339,97 @@ CheckerOverlay_Update() {
 }
 
 
+
+
+
+; "Loading... Please don't touch the mouse or keyboard" GUI
+;This Appears when the automation starts
+busyProcs   := ["Picker.exe"
+              , "Paste the barcode in Checker Window.exe"
+              , "Checker Window.exe"
+              , "Packer Window.exe"]
+busyGraceMs := 800           ; exe iwara wela, meka thuru block eka thiyenawa (window maru gap cover karanna)
+busyActive  := false
+busyLastSeen := -999999
+busyDots    := 0
+
+busyGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
+busyGui.BackColor := "202020"
+busyGui.MarginX := 30
+busyGui.MarginY := 22
+busyGui.SetFont("s18 Bold cFFFFFF", "Segoe UI")
+busyTitle := busyGui.AddText("Center w440", "Automation Running")
+busyGui.SetFont("s11 Norm cDCDCDC", "Segoe UI")
+busyGui.AddText("Center w440", "Loading... Please don't touch the mouse or keyboard")
+
+; --- Low-level hooks: physical input withrai block karanawa (TinyTask/AHK input block wenne naha) ---
+busyKbdCB   := CallbackCreate(BusyKbdHook, "Fast", 3)
+busyMouseCB := CallbackCreate(BusyMouseHook, "Fast", 3)
+busyHMod    := DllCall("GetModuleHandle", "Ptr", 0, "Ptr")
+busyKbdHandle   := DllCall("SetWindowsHookEx", "Int", 13, "Ptr", busyKbdCB,   "Ptr", busyHMod, "UInt", 0, "Ptr")
+busyMouseHandle := DllCall("SetWindowsHookEx", "Int", 14, "Ptr", busyMouseCB, "Ptr", busyHMod, "UInt", 0, "Ptr")
+
+OnExit(BusyGuard_Cleanup)
+SetTimer(BusyGuard_Tick, 100)
+
+BusyKbdHook(nCode, wParam, lParam) {
+    global busyActive
+    if (nCode >= 0 && busyActive) {
+        vk    := NumGet(lParam, 0, "UInt")
+        flags := NumGet(lParam, 8, "UInt")
+        if !(flags & 0x10) && vk != 0x7B      ; injected (automation) allow, F12 (stop) allow
+            return 1
+    }
+    return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UPtr", wParam, "Ptr", lParam, "Ptr")
+}
+
+BusyMouseHook(nCode, wParam, lParam) {
+    global busyActive
+    if (nCode >= 0 && busyActive) {
+        flags := NumGet(lParam, 12, "UInt")
+        if !(flags & 0x1)                     ; injected (automation) allow
+            return 1
+    }
+    return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UPtr", wParam, "Ptr", lParam, "Ptr")
+}
+
+BusyGuard_Tick() {
+    global busyProcs, busyGraceMs, busyActive, busyLastSeen, busyDots, busyGui, busyTitle
+
+    now := A_TickCount
+    for p in busyProcs {
+        if ProcessExist(p) {
+            busyLastSeen := now
+            break
+        }
+    }
+
+    shouldBusy := (now - busyLastSeen) < busyGraceMs
+
+    if (shouldBusy && !busyActive) {
+        busyActive := true
+        busyGui.Show("NA AutoSize Hide")
+        busyGui.GetPos(, , &gW, &gH)
+        MonitorGetWorkArea(1, &l, &t, &r, &b)
+        busyGui.Show("NA x" (l + (r - l - gW) // 2) " y" (t + (b - t - gH) // 2))
+    } else if (!shouldBusy && busyActive) {
+        busyActive := false
+        busyGui.Hide()
+    }
+
+    if busyActive {
+        busyDots := Mod(busyDots + 1, 12)
+        busyTitle.Text := "Automation Running" . SubStr("....", 1, busyDots // 3)
+    }
+}
+
+BusyGuard_Cleanup(*) {
+    global busyKbdHook, busyMouseHook
+    if busyKbdHook
+        DllCall("UnhookWindowsHookEx", "Ptr", busyKbdHook)
+    if busyMouseHook
+        DllCall("UnhookWindowsHookEx", "Ptr", busyMouseHook)
+}
 
 
 /* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
