@@ -192,7 +192,7 @@ F6::{
 ; ================================================================
 
 
-;GUI
+; "Show_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen" Warning Message Overlay GUI
 Show_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen() {
     myGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
     myGui.BackColor := "202020"
@@ -220,67 +220,7 @@ Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(myGui) {
 
 
 
-;GUI 2
-; ── Minimal Black & White Overlay ──
-
-myGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
-myGui.BackColor := "000000"
-myGui.MarginX := 18
-myGui.MarginY := 20
-
-; Header
-myGui.SetFont("s11 Bold cFFFFFF", "Segoe UI")
-myGui.AddText("x18 y20 w224 h30 Center", "Help")
-
-; Divider
-myGui.AddProgress("x18 y60 w224 h1 c606060 Background606060", 100)
-
-; Description
-myGui.SetFont("s13 cDCDCDC", "Segoe UI")
-myGui.AddText("x18 y78 w224 h50 Center", "Enter Picklist number and press 'F5'")
-
-; Extra vertical space at the bottom
-myGui.AddText("x18 y140 w224 h100", "")
-
-guiVisible := false
-
-SetTimer(CheckPickerWindow, 200)
-
-CheckPickerWindow() {
-    global picker_window_pid, myGui, guiVisible
-
-    activeHwnd := WinExist("A")
-    pickerHwnd := WinExist("ahk_pid " picker_window_pid)
-    pickerActive := false
-
-    if (activeHwnd && pickerHwnd) {
-        try {
-            pickerActive := (
-                WinGetPID("ahk_id " activeHwnd) = picker_window_pid
-            )
-        }
-    }
-
-    if (pickerActive && !guiVisible) {
-        myGui.Show("NA AutoSize")
-        myGui.GetPos(, , &guiW, &guiH)
-
-        x := A_ScreenWidth - guiW - 20
-        y := (A_ScreenHeight - guiH) // 2
-
-        myGui.Show("NA x" x " y" y)
-        guiVisible := true
-    } else if (!pickerActive && guiVisible) {
-        myGui.Hide()
-        guiVisible := false
-    }
-}
-
-
-;GUI 3
-
-
-; ── Help Overlay ──
+; "Enter Picklist number and press 'F5'" Warning Message Overlay GUI
 
 checker_window_title := checker_window_pid
 helpGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
@@ -350,6 +290,53 @@ UpdateHelpOverlay() {
     }
 }
 
+
+
+
+; "Scan the Barcodes and Press 'F6' to Submit and Check" Warning Message Overlay GUI
+
+checkerOverlay := Gui("+AlwaysOnTop -Caption +ToolWindow +Border +E0x20")  ; E0x20 = click-through
+checkerOverlay.BackColor := "000000"
+checkerOverlay.MarginX := 18
+checkerOverlay.MarginY := 18
+
+checkerOverlay.SetFont("s11 Bold cFFFFFF", "Segoe UI")
+checkerOverlay_Header := checkerOverlay.AddText("xm Center", "Help")
+
+checkerOverlay_Divider := checkerOverlay.AddText("xm h1 w10 Background606060")
+
+checkerOverlay.SetFont("s13 Norm cDCDCDC", "Segoe UI")
+checkerOverlay_Body := checkerOverlay.AddText("xm Center", "Scan the Barcodes and Press 'F6' to Submit and Check")
+
+; Header + divider width eka, text eke width ekata match karanawa
+checkerOverlay_Body.GetPos(, , &bodyW)
+checkerOverlay_Header.Move(, , bodyW)
+checkerOverlay_Divider.Move(, , bodyW)
+
+checkerOverlayVisible := false
+
+SetTimer(CheckerOverlay_Update, 200)
+
+CheckerOverlay_Update() {
+    global checker_window_pid, checkerOverlay, checkerOverlayVisible
+
+    checkerHwnd := checker_window_pid ? WinExist("ahk_pid " checker_window_pid) : 0
+
+    shouldShow := false
+    if (checkerHwnd && WinActive("ahk_id " checkerHwnd))
+        shouldShow := true
+
+    if (shouldShow && !checkerOverlayVisible) {
+        checkerOverlay.Show("NA AutoSize")
+        checkerOverlay.GetPos(, , &gW, &gH)
+        WinGetPos(&wx, &wy, &wW, &wH, "ahk_id " checkerHwnd)
+        checkerOverlay.Move(wx + wW - gW - 20, wy + (wH - gH) // 2)
+        checkerOverlayVisible := true
+    } else if (!shouldShow && checkerOverlayVisible) {
+        checkerOverlay.Hide()
+        checkerOverlayVisible := false
+    }
+}
 
 
 
