@@ -1,4 +1,6 @@
 #Requires AutoHotkey v2.0  ;මේ Code එකෙන්, AHK v2 එක භාවිතා වන බව පෙන්වයි
+#SingleInstance Force
+
 
 
 msgbox "This Automation Process Is Still In The Test Mode. Do this with your own Risk" ; මේ Code එකෙන්, ලියා ඇති වාක්‍ය, MassageBox එකක දර්ශනය වේ.
@@ -26,7 +28,20 @@ msgbox "This Automation Process Is Still In The Test Mode. Do this with your own
 ::Sarath::dss004825
 ::Bandusena::dss006485
 
-
+::736::dss000736
+::4674::dss004674
+::8290::dss008290
+::8499::dss008499
+::8155::dss008155
+::698::dss000698
+::3512::dss003512
+::3637::dss003637
+::3837::dss003837
+::4826::dss004826
+::5126::dss005126
+::7956::dss007956
+::4825::dss004825
+::6485::dss006485
 
 
 
