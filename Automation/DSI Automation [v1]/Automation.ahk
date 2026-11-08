@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2.0  ;මේ Code එකෙන්, AHK v2 එක භාවිතා වන බව පෙන්වයි
-
+#SingleInstance Force 
 
 msgbox "This Automation Process Is Still In The Test Mode. Do this with your own Risk" ; මේ Code එකෙන්, ලියා ඇති වාක්‍ය, MassageBox එකක දර්ශනය වේ.
 
@@ -433,7 +433,7 @@ BusyGuard_Cleanup(*) {
 
 
 /* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
-#SingleInstance Force 
+
 #UseHook
 F12:: ExitApp
 
