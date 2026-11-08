@@ -431,40 +431,65 @@ Hide_Processing_Please_Wait_Text_In_The_Center_Of_The_Screen(myGui) {
 
 
 ; "Enter Picklist number and press 'F5'"  Message Overlay GUI
+; ===== Help Overlay (Picker) =====
+helpRunLimit := 5
+helpRunFile := A_ScriptDir "\help_overlay.ini"
+helpRunCount := Integer(IniRead(helpRunFile, "Overlay", "Runs", 0))
+helpGuiDismissed := false
 
 checker_window_title := checker_window_pid
-helpGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
+helpGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border +E0x08000000")  ; no-activate, ✕ click karanna puluwan
 helpGui.BackColor := "000000"
-helpGui.MarginX := 18
-helpGui.MarginY := 20
+helpGui.MarginX := 10
+helpGui.MarginY := 8
 
 ; Header
-helpGui.SetFont("s11 Bold cFFFFFF", "Segoe UI")
-helpGui.AddText("x18 y20 w224 h30 Center", "Help")
+helpGui.SetFont("s9 Bold cFFFFFF", "Segoe UI")
+helpGui.AddText("x10 y8 w210 h20 Center", "Help")
 
 ; Divider
 helpGui.AddProgress(
-    "x18 y60 w224 h1 c606060 Background606060",
+    "x10 y32 w210 h1 c606060 Background606060",
     100
 )
 
 ; Instructions
-helpGui.SetFont("s13 cDCDCDC", "Segoe UI")
+helpGui.SetFont("s9 Norm cDCDCDC", "Segoe UI")
 helpGui.AddText(
-    "x18 y78 w224 h50 Center",
+    "x10 y40 w210 h20 Center",
     "Enter Picklist number and press 'F5'"
 )
 
-; Extra height
-helpGui.AddText("x18 y140 w224 h100", "")
+; Window eke udin dakunu kone podi ✕ close eka
+helpGui.SetFont("s9 Bold cB0B0B0", "Segoe UI")
+helpCloseBtn := helpGui.AddText("+0x100 Center x204 y4 w16 h18", "✕")
+helpCloseBtn.OnEvent("Click", HelpOverlay_Close)
+
+; Window eke size eka (padding)
+helpGui.AddText("x10 y62 w210 h2", "")
 
 helpGuiVisible := false
 
 SetTimer(UpdateHelpOverlay, 200)
 
+HelpOverlay_Close(*) {
+    global helpGui, helpGuiVisible, helpGuiDismissed
+    helpGuiDismissed := true
+    helpGui.Hide()
+    helpGuiVisible := false
+}
+
+; Automation eka run wena har pauwe meka call karanna (eg: F5 handler eke modata)
+HelpOverlay_CountRun() {
+    global helpRunCount, helpRunFile
+    helpRunCount += 1
+    IniWrite(helpRunCount, helpRunFile, "Overlay", "Runs")
+}
+
 UpdateHelpOverlay() {
     global picker_window_pid, checker_window_title
     global helpGui, helpGuiVisible
+    global helpGuiDismissed, helpRunCount, helpRunLimit
 
     activeHwnd := WinExist("A")
     checkerHwnd := WinExist(checker_window_title)
@@ -482,6 +507,10 @@ UpdateHelpOverlay() {
         if (checkerHwnd && activeHwnd = checkerHwnd)
             shouldShow := true
     }
+
+    ; ✕ click karala hari, 5 parak run unata passe hari penne na
+    if (helpGuiDismissed || helpRunCount >= helpRunLimit)
+        shouldShow := false
 
     if (shouldShow && !helpGuiVisible) {
         helpGui.Show("NA AutoSize")
@@ -501,21 +530,25 @@ UpdateHelpOverlay() {
 }
 
 
-
-
 ; "Scan the Barcodes and Press 'F6' to Submit and Check" Message Overlay GUI
+;Meke, Size eka adu karala, Close button ekk dala thiyenne. Anika, Automation eka 5 parak run unat passe meka aye penna one na.
+; ===== Checker Overlay =====
+checkerRunLimit := 5
+checkerRunFile := A_ScriptDir "\checker_overlay.ini"
+checkerRunCount := Integer(IniRead(checkerRunFile, "Overlay", "Runs", 0))
+checkerOverlayDismissed := false
 
-checkerOverlay := Gui("+AlwaysOnTop -Caption +ToolWindow +Border +E0x20")  ; E0x20 = click-through
+checkerOverlay := Gui("+AlwaysOnTop -Caption +ToolWindow +Border +E0x08000000")  ; no-activate, ✕ click karanna puluwan
 checkerOverlay.BackColor := "000000"
-checkerOverlay.MarginX := 18
-checkerOverlay.MarginY := 18
+checkerOverlay.MarginX := 10
+checkerOverlay.MarginY := 8
 
-checkerOverlay.SetFont("s11 Bold cFFFFFF", "Segoe UI")
+checkerOverlay.SetFont("s9 Bold cFFFFFF", "Segoe UI")
 checkerOverlay_Header := checkerOverlay.AddText("xm Center", "Help")
 
 checkerOverlay_Divider := checkerOverlay.AddText("xm h1 w10 Background606060")
 
-checkerOverlay.SetFont("s13 Norm cDCDCDC", "Segoe UI")
+checkerOverlay.SetFont("s9 Norm cDCDCDC", "Segoe UI")
 checkerOverlay_Body := checkerOverlay.AddText("xm Center", "Scan the Barcodes and Press 'F6' to Submit and Check")
 
 ; Header + divider width eka, text eke width ekata match karanawa
@@ -523,17 +556,38 @@ checkerOverlay_Body.GetPos(, , &bodyW)
 checkerOverlay_Header.Move(, , bodyW)
 checkerOverlay_Divider.Move(, , bodyW)
 
+; Window eke udin dakunu kone podi ✕ close eka
+checkerOverlay.SetFont("s9 Bold cB0B0B0", "Segoe UI")
+checkerCloseBtn := checkerOverlay.AddText("+0x100 Center x" (checkerOverlay.MarginX + bodyW - 16) " y4 w16 h18", "✕")
+checkerCloseBtn.OnEvent("Click", CheckerOverlay_Close)
+
 checkerOverlayVisible := false
 
 SetTimer(CheckerOverlay_Update, 200)
 
+CheckerOverlay_Close(*) {
+    global checkerOverlay, checkerOverlayVisible, checkerOverlayDismissed
+    checkerOverlayDismissed := true
+    checkerOverlay.Hide()
+    checkerOverlayVisible := false
+}
+
+; Automation eka run wena har pauwe meka call karanna (eg: F6 handler eke modata)
+CheckerOverlay_CountRun() {
+    global checkerRunCount, checkerRunFile
+    checkerRunCount += 1
+    IniWrite(checkerRunCount, checkerRunFile, "Overlay", "Runs")
+}
+
 CheckerOverlay_Update() {
     global checker_window_pid, checkerOverlay, checkerOverlayVisible
+    global checkerOverlayDismissed, checkerRunCount, checkerRunLimit
 
     checkerHwnd := checker_window_pid ? WinExist("ahk_pid " checker_window_pid) : 0
 
     shouldShow := false
-    if (checkerHwnd && WinActive("ahk_id " checkerHwnd))
+    if (checkerHwnd && WinActive("ahk_id " checkerHwnd)
+        && !checkerOverlayDismissed && checkerRunCount < checkerRunLimit)
         shouldShow := true
 
     if (shouldShow && !checkerOverlayVisible) {
@@ -554,23 +608,59 @@ CheckerOverlay_Update() {
 
 ; "Loading... Please don't touch the mouse or keyboard" GUI
 ;This Appears when the automation starts
+#Requires AutoHotkey v2.0
+
 busyProcs   := ["Picker.exe"
               , "Paste the barcode in Checker Window.exe"
               , "Checker Window.exe"
               , "Packer Window.exe"]
-busyGraceMs := 800           ; exe iwara wela, meka thuru block eka thiyenawa (window maru gap cover karanna)
-busyActive  := false
+busyGraceMs  := 800          ; exe iwara wela, meka thuru block eka thiyenawa (window maru gap cover karanna)
+busyActive   := false
 busyLastSeen := -999999
-busyDots    := 0
+busyDots     := 0
+busyFrame    := 0
+busySpinFrames := ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+busyAccent   := "4FC3F7"
 
-busyGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
-busyGui.BackColor := "202020"
-busyGui.MarginX := 30
-busyGui.MarginY := 22
-busyGui.SetFont("s18 Bold cFFFFFF", "Segoe UI")
-busyTitle := busyGui.AddText("Center w440", "Automation Running")
-busyGui.SetFont("s11 Norm cDCDCDC", "Segoe UI")
-busyGui.AddText("Center w440", "Loading... Please don't touch the mouse or keyboard")
+; ---------- DPI scale (ona PC ekakata, ona screen ekakata) ----------
+busyS := A_ScreenDPI / 96
+Sc(n) => Round(n * busyS)
+
+busyW      := Sc(360)
+busyH      := Sc(96)
+busyPad    := Sc(20)
+busyMargin := Sc(100)         ; screen edge ekata gap eka (yatin saha dakunen)
+
+; ---------- GUI ----------
+busyGui := Gui("+AlwaysOnTop -Caption +ToolWindow -DPIScale +E0x08000000")
+busyGui.BackColor := "1B1B1F"
+busyGui.MarginX := 0
+busyGui.MarginY := 0
+
+; spinner (left, text block ekata samaanawa vertical center)
+busyGui.SetFont("s20 c" busyAccent, "Segoe UI Symbol")
+busySpin := busyGui.AddText("x" busyPad " y" Sc(18) " w" Sc(44) " h" Sc(44) " Center +0x200", busySpinFrames[1])
+
+; title + subtitle
+textX := busyPad + Sc(44) + Sc(12)
+textW := busyW - textX - busyPad
+
+busyGui.SetFont("s12 Bold cFFFFFF", "Segoe UI")
+busyTitle := busyGui.AddText("x" textX " y" Sc(18) " w" textW " h" Sc(26) " +0x200", "Automation Running")
+
+busyGui.SetFont("s9 Norm cA0A0A0", "Segoe UI")
+busyGui.AddText("x" textX " y" Sc(44) " w" textW " h" Sc(18) " +0x200", "Please don't touch the mouse or keyboard")
+
+; sliding loading bar (marquee), padding dekatama samaanawa
+busyBar := busyGui.AddProgress("x" busyPad " y" Sc(76) " w" (busyW - busyPad * 2) " h" Sc(4)
+                             . " -Theme +0x8 c" busyAccent " Background33333A")
+SendMessage(0x40A, 1, 25, busyBar.Hwnd)    ; PBM_SETMARQUEE (on, 25ms)
+
+; size set karala, rounded corners damma
+busyGui.Show("NA Hide w" busyW " h" busyH)
+busyRgn := DllCall("CreateRoundRectRgn", "Int", 0, "Int", 0, "Int", busyW + 1, "Int", busyH + 1
+                 , "Int", Sc(18), "Int", Sc(18), "Ptr")
+DllCall("SetWindowRgn", "Ptr", busyGui.Hwnd, "Ptr", busyRgn, "Int", true)
 
 ; --- Low-level hooks: physical input withrai block karanawa (TinyTask/AHK input block wenne naha) ---
 busyKbdCB   := CallbackCreate(BusyKbdHook, "Fast", 3)
@@ -580,7 +670,7 @@ busyKbdHandle   := DllCall("SetWindowsHookEx", "Int", 13, "Ptr", busyKbdCB,   "P
 busyMouseHandle := DllCall("SetWindowsHookEx", "Int", 14, "Ptr", busyMouseCB, "Ptr", busyHMod, "UInt", 0, "Ptr")
 
 OnExit(BusyGuard_Cleanup)
-SetTimer(BusyGuard_Tick, 100)
+SetTimer(BusyGuard_Tick, 80)
 
 BusyKbdHook(nCode, wParam, lParam) {
     global busyActive
@@ -604,7 +694,8 @@ BusyMouseHook(nCode, wParam, lParam) {
 }
 
 BusyGuard_Tick() {
-    global busyProcs, busyGraceMs, busyActive, busyLastSeen, busyDots, busyGui, busyTitle
+    global busyProcs, busyGraceMs, busyActive, busyLastSeen, busyDots, busyFrame
+    global busyGui, busyTitle, busySpin, busySpinFrames, busyW, busyH, busyMargin
 
     now := A_TickCount
     for p in busyProcs {
@@ -618,29 +709,34 @@ BusyGuard_Tick() {
 
     if (shouldBusy && !busyActive) {
         busyActive := true
-        busyGui.Show("NA AutoSize Hide")
-        busyGui.GetPos(, , &gW, &gH)
-        MonitorGetWorkArea(1, &l, &t, &r, &b)
-        busyGui.Show("NA x" (l + (r - l - gW) // 2) " y" (t + (b - t - gH) // 2))
+        ; work area = taskbar eka bahala screen eka, nisa taskbar eken poddak udata
+        MonitorGetWorkArea(MonitorGetPrimary(), &l, &t, &r, &b)
+        x := r - busyW - busyMargin
+        y := b - busyH - busyMargin
+        x := Max(x, l)                        ; podi screen walatath eliyata yanne naha
+        y := Max(y, t)
+        busyGui.Show("NA x" x " y" y)
     } else if (!shouldBusy && busyActive) {
         busyActive := false
         busyGui.Hide()
     }
 
     if busyActive {
-        busyDots := Mod(busyDots + 1, 12)
-        busyTitle.Text := "Automation Running" . SubStr("....", 1, busyDots // 3)
+        busyFrame := Mod(busyFrame + 1, busySpinFrames.Length)
+        busySpin.Text := busySpinFrames[busyFrame + 1]
+
+        busyDots := Mod(busyDots + 1, 16)
+        busyTitle.Text := "Automation Running" . SubStr("...", 1, busyDots // 4)
     }
 }
 
 BusyGuard_Cleanup(*) {
-    global busyKbdHook, busyMouseHook
-    if busyKbdHook
-        DllCall("UnhookWindowsHookEx", "Ptr", busyKbdHook)
-    if busyMouseHook
-        DllCall("UnhookWindowsHookEx", "Ptr", busyMouseHook)
+    global busyKbdHandle, busyMouseHandle
+    if busyKbdHandle
+        DllCall("UnhookWindowsHookEx", "Ptr", busyKbdHandle)
+    if busyMouseHandle
+        DllCall("UnhookWindowsHookEx", "Ptr", busyMouseHandle)
 }
-
 
 /* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
 #SingleInstance Force 
