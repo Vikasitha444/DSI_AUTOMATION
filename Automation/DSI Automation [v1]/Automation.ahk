@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2.0  ;මේ Code එකෙන්, AHK v2 එක භාවිතා වන බව පෙන්වයි
-#SingleInstance Force 
+
 
 msgbox "This Automation Process Is Still In The Test Mode. Do this with your own Risk" ; මේ Code එකෙන්, ලියා ඇති වාක්‍ය, MassageBox එකක දර්ශනය වේ.
 
@@ -178,6 +178,216 @@ F6::{
 
 
 
+
+;==============================================================================================
+;  අලුතින් එකතු කල කොටස : INCORRECT ITEM ALERT (රතු Screen එකෙන් Warning එකක් පෙන්වීම)
+;  (ඉහත තිබූ කිසිම Code එකක් වෙනස් කර නැත. මේ කොටස, සම්පූර්ණයෙන්ම, අලුතින් එකතු කල ඒවා පමණි.)
+;==============================================================================================
+
+#HotIf   ; ඉහත "#HotIf" Conditions, මෙතැන සිට අවලංගු කරයි.
+
+
+; --- "Incorrect Items" Table එක තියෙන තැන (Checker Window එකේ Client ඛණ්ඩාංක). අවශ්‍ය නම් පමණක් වෙනස් කරන්න. ---
+global INC_X := 405     ; Table එකේ වම් පැත්තේ X
+global INC_Y := 258     ; Table එකේ Header එකට පහළින් පටන් ගන්නා Y
+global INC_W := 298     ; පළල
+global INC_H := 400     ; උස (පේළි 16ක් පමණ)
+
+
+; ඉහත Table එක, සෑම 200ms කට වරක් පරික්ෂා කරයි. (Checker Window එක Active වී ඇති විට පමණි)
+SetTimer(CheckIncorrectItems, 200)
+
+
+; Barcode Scanner එකෙන් "Text" එකක් ලෙස Type වන Item Code එක (උදා: PI072605), "Enter" එක එන තුරු සටහන් කරගනී. (Keyboard එකේ Type වන දේවල් අවහිර නොකරයි - "V" = Visible)
+global lastScan := ""
+global scanIH := InputHook("V", "{Enter}{NumpadEnter}")
+scanIH.OnEnd := ScanInputEnded
+scanIH.Start()
+
+ScanInputEnded(ih) {
+    global lastScan
+    t := Trim(ih.Input)
+    if RegExMatch(t, "^\S*\d{4,}\S*$")     ; ඉලක්කම් 4ක් හෝ වැඩි, හිස්තැන් නැති Text එකක් පමණක් "Barcode" එකක් ලෙස සලකයි
+        lastScan := t
+    ih.Start()
+}
+
+
+
+; Table එකේ පින්තූරය (Pixels) ගෙන, එහි "Signature" එකක් (CRC) සාදයි. Table එකේ අලුත් Item එකක් ආවොත්, හෝ Qty එක වැඩි වුනොත්, Signature එක වෙනස් වේ.
+CheckIncorrectItems() {
+    static lastSig := "", candSig := "", stable := 0, initDone := false, pending := false
+
+    ; "Incorrect bar code" වැනි Popup (Dialog) එකක් Open වී තිබෙන විට, Table එක පරික්ෂා නොකරයි. (Popup එකේ පින්තූරය, Table එකේ පින්තූරයට මිශ්‍ර වීම වැළැක්වීමට)
+    if (checker_window_pid && !PopupOpen() && WinActive("ahk_pid " . checker_window_pid)) {
+        hwnd := WinExist("A")
+        if (WinGetClass(hwnd) = "SunAwtFrame") {      ; Active Window එක, Checker ගේ ප්‍රධාන Window එක නම් පමණි
+            try {
+                WinGetClientPos(&cx, &cy, , , hwnd)
+            } catch {
+                return
+            }
+
+            sig := CaptureIncorrectTable(cx + INC_X, cy + INC_Y, INC_W, INC_H, &nonEmpty)
+
+            if (sig != "") {
+                if !initDone {
+                    lastSig := sig          ; පළමු වතාවට, තිබෙන දේ "Baseline" එක ලෙස ගනී (Alert එකක් නැත)
+                    initDone := true
+                } else if (sig = lastSig) {
+                    stable := 0
+                } else {
+                    ; වෙනසක් පෙනුනොත්, ඒ වෙනස 2 වතාවක් (400ms) එක දිගට තිබුනොත් පමණක් පිළිගනී. (Popup එකක් වැසෙන විට ඇතිවන තාවකාලික වෙනස්කම් මඟ හැරීමට)
+                    if (sig = candSig) {
+                        stable += 1
+                    } else {
+                        candSig := sig
+                        stable := 1
+                    }
+                    if (stable >= 2) {
+                        lastSig := sig
+                        stable := 0
+                        pending := nonEmpty     ; Table එක හිස් වුනොත් (Reset), Alert එකක් නැත. Item තිබේ නම් පමණක් Alert කරයි.
+                    }
+                }
+            }
+        }
+    }
+
+    ; TinyTask Macros ක්‍රියාත්මක වෙන විට, හෝ Popup එකක් Open වී ඇති විට, රතු Screen එක පෙන්වන්නේ නැත. ඒවා ඉවර වූ පසු පෙන්වයි.
+    if (pending && !MacroRunning() && !PopupOpen()) {
+        pending := false
+        ShowIncorrectItemAlert()
+    }
+}
+
+
+
+; Checker එකේ (javaw.exe) "Incorrect bar code" වැනි Popup / Dialog Window එකක් Open වී තිබේද යන්න පරික්ෂා කරයි.
+PopupOpen() {
+    return checker_window_pid && WinExist("ahk_pid " . checker_window_pid . " ahk_class SunAwtDialog")
+}
+
+
+
+MacroRunning() {
+    for n in ["Picker.exe", "Paste the barcode in Checker Window.exe", "Checker Window.exe", "Packer Window.exe"] {
+        if ProcessExist(n)
+            return true
+    }
+    return false
+}
+
+
+
+; Screen එකේ ලබා දුන් කොටසේ පින්තූරය ගෙන, CRC අගයක් ලබා දෙයි. (&nonEmpty = Table එකේ පළමු පේළියේ Item එකක් තිබේද යන්න)
+CaptureIncorrectTable(x, y, w, h, &nonEmpty) {
+    nonEmpty := false
+
+    hdcScreen := DllCall("GetDC", "Ptr", 0, "Ptr")
+    hdcMem    := DllCall("CreateCompatibleDC", "Ptr", hdcScreen, "Ptr")
+    hbm       := DllCall("CreateCompatibleBitmap", "Ptr", hdcScreen, "Int", w, "Int", h, "Ptr")
+    hOld      := DllCall("SelectObject", "Ptr", hdcMem, "Ptr", hbm, "Ptr")
+
+    ok := DllCall("BitBlt", "Ptr", hdcMem, "Int", 0, "Int", 0, "Int", w, "Int", h
+                          , "Ptr", hdcScreen, "Int", x, "Int", y, "UInt", 0x00CC0020)
+
+    bmi := Buffer(40, 0)
+    NumPut("UInt", 40, "Int", w, "Int", -h, "UShort", 1, "UShort", 32, bmi)
+    buf := Buffer(w * h * 4, 0)
+    DllCall("GetDIBits", "Ptr", hdcMem, "Ptr", hbm, "UInt", 0, "UInt", h, "Ptr", buf, "Ptr", bmi, "UInt", 0)
+
+    DllCall("SelectObject", "Ptr", hdcMem, "Ptr", hOld)
+    DllCall("DeleteObject", "Ptr", hbm)
+    DllCall("DeleteDC", "Ptr", hdcMem)
+    DllCall("ReleaseDC", "Ptr", 0, "Ptr", hdcScreen)
+
+    if !ok
+        return ""
+
+    ; පළමු පේළියේ Pixel එක, Table එකේ පහළ (හිස්) Pixel එකට වඩා වෙනස් නම්, Table එකේ Items තිබේ.
+    topPx := NumGet(buf, (6 * w + 4) * 4, "UInt") & 0xFFFFFF
+    botPx := NumGet(buf, ((h - 6) * w + 4) * 4, "UInt") & 0xFFFFFF
+    nonEmpty := (topPx != botPx)
+
+    return String(DllCall("ntdll\RtlComputeCrc32", "UInt", 0, "Ptr", buf, "UInt", buf.Size, "UInt"))
+}
+
+
+
+; මුළු Screen එකම රතු පාටින් වසා, Warning එක පෙන්වයි. "OK" Click කල පසු පමණක් අතුරුදහන් වේ.
+ShowIncorrectItemAlert(code := "") {
+    prev := WinExist("A")       ; කලින් Active වී තිබූ Window එක (OK ඔබන විට, නැවත එයට යාමට)
+
+    sw := A_ScreenWidth
+    sh := A_ScreenHeight
+
+    g := Gui("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
+    g.BackColor := "FF0000"
+    g.MarginX := 0
+    g.MarginY := 0
+
+    g.SetFont("s54 bold cWhite", "Segoe UI")
+    g.Add("Text", "x0 y" Round(sh * 0.16) " w" sw " Center BackgroundTrans", "INCORRECT ITEM DETECTED!")
+
+    if (code != "") {
+        ; Scan කල Text එක "05pi074618" වගේ නම්: Qty = 05, Item = PI 074618 ලෙස වෙන් කර, "PI 074618  05" ආකාරයෙන් පෙන්වයි.
+        item := StrUpper(code)
+        qty  := ""
+        if RegExMatch(code, "^(\d+)([A-Za-z]+)(\d+)$", &m) {
+            item := StrUpper(m[2]) " " m[3]
+            qty  := m[1]
+        } else if RegExMatch(code, "^([A-Za-z]+)(\d+)$", &m) {
+            item := StrUpper(m[1]) " " m[2]
+        }
+
+        yy := Round(sh * 0.32)
+        gap := 30
+        g.SetFont("s66 bold cYellow", "Segoe UI")
+        t1 := g.Add("Text", "x0 y" yy " BackgroundTrans", item)
+        t1.GetPos(, , &w1, &h1)
+
+        w2 := 0
+        h2 := 0
+        if (qty != "") {
+            g.SetFont("s36 bold cWhite", "Segoe UI")     ; Qty එක, Item Code එකට වඩා කුඩා අකුරින්
+            t2 := g.Add("Text", "x0 y" yy " BackgroundTrans", qty)
+            t2.GetPos(, , &w2, &h2)
+            total := w1 + gap + w2
+        } else {
+            total := w1
+        }
+
+        x0 := Round((sw - total) / 2)
+        t1.Move(x0, yy)
+        if (qty != "")
+            t2.Move(x0 + w1 + gap, yy + h1 - h2 - 10)    ; පහළට සමතලා වන සේ (Baseline)
+    }
+
+    g.SetFont("s26 bold cWhite", "Segoe UI")
+    g.Add("Text", "x0 y" Round(sh * 0.50) " w" sw " Center BackgroundTrans"
+        , "Check the 'Incorrect Items' list, remove the wrong item,`nthen click OK to continue.")
+
+    g.SetFont("s30 bold cBlack", "Segoe UI")
+    btn := g.Add("Button", "x" Round((sw - 300) / 2) " y" Round(sh * 0.70) " w300 h90 Default", "OK")   ; "Default" = Keyboard එකේ "Enter" ඔබන විටත් "OK" Click වේ.
+    shownAt := A_TickCount
+    ; Scanner එකේ අන්තිමට එන "Enter" එකෙන් අහම්බෙන් වැසී යාම වැළැක්වීමට, පළමු 0.8s තුල, Enter/Click නොසලකා හරියි.
+    btn.OnEvent("Click", (*) => (A_TickCount - shownAt > 800) ? g.Destroy() : 0)
+
+    hw := g.Hwnd
+    g.Show("x0 y0 w" sw " h" sh)
+    WinActivate("ahk_id " hw)
+    btn.Focus()
+
+    SoundBeep(1200, 250)
+    SoundBeep(1200, 250)
+    shownAt := A_TickCount      ; Beep ඉවර වූ පසු, නැවත කාලය ගණනය කරයි
+
+    WinWaitClose("ahk_id " hw)      ; "OK" Click කරනතුරු රැඳී සිටී
+
+    if (prev && WinExist("ahk_id " prev))
+        WinActivate("ahk_id " prev) ; කලින් Window එකට (Checker) නැවත යයි
+}
 
 
 
@@ -433,7 +643,7 @@ BusyGuard_Cleanup(*) {
 
 
 /* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
-
+#SingleInstance Force 
 #UseHook
 F12:: ExitApp
 
