@@ -3,7 +3,7 @@
 
 
 
-msgbox "This Automation Process Is Still In The Test Mode. Do this with your own Risk" ; මේ Code එකෙන්, ලියා ඇති වාක්‍ය, MassageBox එකක දර්ශනය වේ.
+
 
 /* AHK තුල, Special Keys වල නම් වෙනුවට භාවිතා කරන සංඛේත */
             /* ^ : Control */
