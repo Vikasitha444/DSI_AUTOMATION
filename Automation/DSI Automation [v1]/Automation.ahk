@@ -1,7 +1,177 @@
 #Requires AutoHotkey v2.0  ;මේ Code එකෙන්, AHK v2 එක භාවිතා වන බව පෙන්වයි
 #SingleInstance Force
 
+; ===================================================================
+; DASHBOARD - Script eka open wenakotama meka penenawa.
+; "Start Automation" click karanakan, yatin thiyena Automation code eka wait karanawa.
+; Logo: Script eka thiyena folder eke  dsi_logo.png  (nathnam .jpg/.jpeg/.ico)  danna.
+; ===================================================================
+checker_window_pid := 0
+packer_window_pid  := 0
+picker_window_pid  := 0
+dashStarted := false
+dashBtns := Map()
+dashHoverHwnd := 0
+dashAuto := (A_Args.Length >= 1 && A_Args[1] = "auto")    ; Restart eken awoth, Start click nokara thaniyama automation eka start wenawa
 
+; ---- Logo file eka hoyanawa ----
+dashLogoFile := ""
+for dashExt in ["png", "jpg", "jpeg", "ico"] {
+    if FileExist(A_ScriptDir "\dsi_logo." dashExt) {
+        dashLogoFile := A_ScriptDir "\dsi_logo." dashExt
+        break
+    }
+}
+
+dashGui := Gui(, "DSI Dashboard")
+dashGui.BackColor := "F4F6FA"
+dashGui.MarginX := 0
+dashGui.MarginY := 24
+
+; ---- Header (sudu paata + nil line eka) ----
+dashGui.AddText("x0 y0 w360 h100 BackgroundFFFFFF")
+dashGui.AddText("x0 y100 w360 h4 Background2563EB")
+
+dashTitleX := 130
+if (dashLogoFile != "") {
+    dashLogo := dashGui.AddPicture("x24 y15 h70 w-1 BackgroundTrans", dashLogoFile)
+    dashLogo.GetPos(&dashLX, , &dashLW)
+    dashTitleX := dashLX + dashLW + 18
+} else {
+    dashGui.SetFont("s28 Bold c2563EB", "Segoe UI")
+    dashGui.AddText("x24 y22 w90 h56 BackgroundTrans", "DSI")
+}
+
+dashGui.SetFont("s17 Bold c12294D", "Segoe UI")
+dashGui.AddText("x" dashTitleX " y22 w200 BackgroundTrans", "DSI Automation")
+dashGui.SetFont("s9 Norm c6B7685", "Segoe UI")
+dashGui.AddText("x" dashTitleX " y58 w200 BackgroundTrans", "Picker  •  Checker  •  Packer")
+
+; ---- Buttons (podi, rang walin) ----
+dashGui.SetFont("s10 Bold cWhite", "Segoe UI")
+dashStartBtn   := Dashboard_AddBtn("x70 y128", "Start Automation", "16A34A", "15803D", Dashboard_Start)
+dashUpdateBtn  := Dashboard_AddBtn("x70 y+12", "Update",           "2563EB", "1D4ED8", Dashboard_Update)
+dashRestartBtn := Dashboard_AddBtn("x70 y+12", "Restart",          "64748B", "475569", Dashboard_Restart)
+
+; ---- Status text (Update eke status eka methana penenawa) ----
+dashGui.SetFont("s10 Norm c5A6475", "Segoe UI")
+dashStatus := dashGui.AddText("x30 y+18 w300 r1 Center", "")
+
+dashGui.OnEvent("Close", (*) => ExitApp())    ; X click karoth script eka nawathenawa
+
+if dashAuto {
+    dashGui.Show("AutoSize Center Minimize")  ; Restart eken awe nam, dashboard eka minimize wela thiyenawa
+    Dashboard_Start()                         ; Start click karapu wage, automation eka thaniyama start wenawa
+} else {
+    dashGui.Show("AutoSize Center")
+}
+SetTimer(Dashboard_Hover, 60)                 ; Mouse hover rang wenas wenna
+
+while !dashStarted      ; "Start Automation" click karanakan methanin yata yanne na
+    Sleep(50)
+
+; ===================================================================
+; Dashboard functions
+; ===================================================================
+Dashboard_AddBtn(opts, text, color, hover, callback) {
+    global dashGui, dashBtns
+    c := dashGui.AddText(opts " w220 h40 +0x200 Center Background" color, text)
+    b := {ctrl: c, color: color, hover: hover, enabled: true}
+    dashBtns[c.Hwnd] := b
+    c.OnEvent("Click", (*) => (b.enabled ? callback() : ""))
+    return c
+}
+
+Dashboard_Paint(hwnd, isHover) {
+    global dashBtns
+    b := dashBtns[hwnd]
+    color := !b.enabled ? "9CA3AF" : (isHover ? b.hover : b.color)
+    b.ctrl.Opt("Background" color)
+    b.ctrl.Redraw()
+}
+
+Dashboard_SetEnabled(ctrl, enabled) {
+    global dashBtns
+    dashBtns[ctrl.Hwnd].enabled := enabled
+    Dashboard_Paint(ctrl.Hwnd, false)
+}
+
+Dashboard_Hover() {
+    global dashBtns, dashHoverHwnd
+    MouseGetPos(, , , &h, 2)
+    h := h ? h : 0
+    if (h = dashHoverHwnd)
+        return
+    if dashBtns.Has(dashHoverHwnd)
+        Dashboard_Paint(dashHoverHwnd, false)
+    dashHoverHwnd := h
+    if dashBtns.Has(h)
+        Dashboard_Paint(h, true)
+}
+
+Dashboard_Start(*) {
+    global dashStarted, dashStartBtn, dashStatus, dashGui
+    dashStarted := true
+    dashStartBtn.Text := "Automation Running"
+    Dashboard_SetEnabled(dashStartBtn, false)
+    dashStatus.Text := "Automation is running"
+    dashGui.Minimize()      ; taskbar ekata yanawa. Aye one welawata taskbar eken click karanna
+}
+
+; Mulu automation ekama aye restart karanawa.
+; Automation eka run wenawanam: aluth run eka thaniyama start wenawa (dashboard eka minimize wela).
+; Start click karala nathnam: dashboard eka witharak aye mulin penenawa.
+Dashboard_Restart(*) {
+    global dashStarted
+    extra := dashStarted ? " auto" : ""
+    if A_IsCompiled
+        Run('"' A_ScriptFullPath '"' extra)
+    else
+        Run('"' A_AhkPath '" "' A_ScriptFullPath '"' extra)
+    ; #SingleInstance Force nisa, palaweni run eka thaniyama nawathenawa
+}
+
+Dashboard_Update(*) {
+    global dashStarted, dashStartBtn, dashUpdateBtn, dashRestartBtn, dashStatus
+
+    ; Update wenakota, buttons disable karanawa (double-click karanna ba)
+    Dashboard_SetEnabled(dashStartBtn, false)
+    Dashboard_SetEnabled(dashUpdateBtn, false)
+    Dashboard_SetEnabled(dashRestartBtn, false)
+    dashStatus.Text := "Checking for updates..."
+
+    outFile := A_Temp "\dsi_update_output.txt"
+    try FileDelete(outFile)
+
+    ; (1) git config --global http.sslBackend openssl   (2) git pull origin main
+    ; Script eka thiyena folder eke idan run wenawa. Output eka temp file ekakata save wenawa.
+    cmd := A_ComSpec ' /c "cd /d "' A_ScriptDir '" && (git config --global http.sslBackend openssl && git pull origin main) > "' outFile '" 2>&1"'
+    Run(cmd, , "Hide", &pid)
+    while ProcessExist(pid)
+        Sleep(100)
+
+    output := ""
+    try output := Trim(FileRead(outFile))
+    try FileDelete(outFile)
+
+    if (output = "" || RegExMatch(output, "i)fatal|error:|not recognized|conflict|aborting")) {
+        dashStatus.Text := "Update failed"
+        MsgBox("Update failed:`n`n" SubStr(output, 1, 800), "DSI Dashboard", "Iconx")
+    } else if RegExMatch(output, "i)Already up.to.date") {
+        dashStatus.Text := "Already up to date"
+    } else {
+        dashStatus.Text := "Updated successfully"
+        if (MsgBox("Update finished.`n`nRestart now to use the new version?", "DSI Dashboard", "YesNo Iconi") = "Yes") {
+            Dashboard_Restart()
+            return
+        }
+    }
+
+    if !dashStarted
+        Dashboard_SetEnabled(dashStartBtn, true)    ; Automation start wela nam, Start button eka disable wenawama thiyenawa
+    Dashboard_SetEnabled(dashUpdateBtn, true)
+    Dashboard_SetEnabled(dashRestartBtn, true)
+}
 
 
 
@@ -753,6 +923,9 @@ BusyGuard_Cleanup(*) {
     if busyMouseHandle
         DllCall("UnhookWindowsHookEx", "Ptr", busyMouseHandle)
 }
+
+
+
 
 /* Script එකක් F12 Press කරලා, නවත්වන්න හදපු Code එක */
 #SingleInstance Force 
