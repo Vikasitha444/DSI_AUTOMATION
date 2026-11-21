@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2.0  ;මේ Code එකෙන්, AHK v2 එක භාවිතා වන බව පෙන්වයි
 #SingleInstance Force
+TraySetIcon("icon.ico")
 
 ; ===================================================================
 ; DASHBOARD - Script eka open wenakotama meka penenawa.
